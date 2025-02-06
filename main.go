@@ -14,16 +14,6 @@ import (
 func main() {
 	dsn := "root:@tcp(127.0.0.1:3306)/bwastartup?charset=utf8mb4&parseTime=True&loc=Local"
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
-	// cdc_kevin:KevinDev2024!@#@tcp(10.8.0.101:3306)/cake4ahass?charset=utf8mb4&parseTime=True&loc=Local
-	// user := os.Getenv("DB_USER")
-	// password := os.Getenv("DB_PASS")
-	// //password := url.QueryEscape(rawPassword) // URL encode the password
-	// host := os.Getenv("DB_HOST")
-	// port := os.Getenv("DB_PORT")
-	// dbname := os.Getenv("DB_NAME")
-
-	// return fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
-	// 	user, password, host, port, dbname)
 
 	if err != nil {
 		log.Fatal(err.Error())
