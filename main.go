@@ -2,6 +2,7 @@ package main
 
 import (
 	"bwastartup/auth"
+	"bwastartup/campaign"
 	"bwastartup/handler"
 	"bwastartup/helper"
 	"bwastartup/user"
@@ -45,12 +46,34 @@ func main() {
 
 	fmt.Println("Connection to database is good")
 
-	// call func NewRepository dari /user/repository
-	userRepository := user.NewRepository(db)
+	/* call repository */
+	userRepository := user.NewRepository(db) // call func NewRepository dari /user/repository
+	campaignRepository := campaign.NewRepository(db)
+	/* end call repository */
+
+	/* DEBUGGING REPOSITORY */
+	// campaigns, _ := campaignRepository.FindAll()
+	campaigns, _ := campaignRepository.FindByUserID(1)
+	fmt.Println("debug")
+	fmt.Println("debug")
+	fmt.Println("debug")
+	fmt.Println(len(campaigns))
+	for _, campaign := range campaigns {
+		fmt.Println(campaign.Name)
+		if len(campaign.CampaignImages) > 0 {
+			fmt.Println(campaign.CampaignImages[0].FileName)
+		}
+	}
+	/* DEBUGGING REPOSITORY */
+
+	/* call service */
 	userService := user.NewService(userRepository)
 	authService := auth.NewService()
+	/* end call service */
 
+	/* call handler */
 	userHandler := handler.NewUserHandler(userService, authService)
+	/* end call handler */
 
 	router := gin.Default()
 	api := router.Group("/api/v1")
@@ -110,34 +133,3 @@ func authMiddleware(authService auth.Service, userService user.Service) gin.Hand
 		c.Set("currentUser", user)
 	}
 }
-
-// // gin handler hanya ada 1 parameter gin.Context
-// func authMiddleware(c *gin.Context) {
-// 	/*
-// 		KONSEP MIDDLEWARE
-// 		- ambil nilai header Authorization -> bearer token
-// 		- dari header Authorization, kita ambil nilai tokennya saja
-// 		- kita validasi token
-// 		- kita ambil user_id
-// 		- ambil user dari db berdasarkan user_id lewat service
-// 		- kita set context isinya user
-// 	*/
-// 	authHeader := c.GetHeader("Authorization")
-
-// 	// validation
-// 	if !strings.Contains(authHeader, "Bearer") {
-// 		response := helper.APIResponse("Unauthorized", http.StatusUnauthorized, "error", nil)
-// 		c.AbortWithStatusJSON(http.StatusUnauthorized, response) // middleware ada di tengah, jika ada error/ terkena validasi, proses seharusnya dihentikan
-// 		return
-// 	}
-
-// 	// Bearer token
-// 	tokenString := ""
-// 	arrayToken := strings.Split(authHeader, " ")
-// 	if len(arrayToken) == 2 {
-// 		tokenString = arrayToken[1]
-// 	}
-
-// 	token, err :=
-
-// }
