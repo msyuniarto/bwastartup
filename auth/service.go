@@ -2,8 +2,11 @@ package auth
 
 import (
 	"errors"
+	"log"
+	"os"
 
 	"github.com/dgrijalva/jwt-go"
+	"github.com/joho/godotenv"
 )
 
 type Service interface {
@@ -14,7 +17,27 @@ type Service interface {
 type jwtService struct {
 }
 
-var SECRET_KEY = []byte("BWASTARTUP_s3cr3T_k3Y")
+// var SECRET_KEY = []byte("BWASTARTUP_s3cr3T_k3Y")
+// SECRET_KEY sebagai variabel global
+var SECRET_KEY []byte
+
+// Fungsi init() akan dijalankan otomatis saat package di-load
+func init() {
+	// Load .env file
+	err := godotenv.Load()
+	if err != nil {
+		log.Println("Warning: .env file not found, using default SECRET_KEY")
+		return
+	}
+
+	// Ambil SECRET_KEY dari environment
+	secret := os.Getenv("SECRET_KEY")
+	if secret == "" {
+		secret = "default_secret" // Default jika tidak ada di .env
+	}
+
+	SECRET_KEY = []byte(secret)
+}
 
 func NewService() *jwtService {
 	return &jwtService{}
