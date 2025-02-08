@@ -3,11 +3,15 @@ package main
 import (
 	"bwastartup/auth"
 	"bwastartup/handler"
+	"bwastartup/helper"
 	"bwastartup/user"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
+	"strings"
 
+	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"gorm.io/driver/mysql"
@@ -29,7 +33,6 @@ func main() {
 	dbPass := os.Getenv("DB_PASS")
 	dbName := os.Getenv("DB_NAME")
 
-	// dsn := "root:@tcp(127.0.0.1:3306)/bwastartup?charset=utf8mb4&parseTime=True&loc=Local"
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local", dbUser, dbPass, ipAddress, dbPort, dbName)
 	// fmt.Println(dsn)
 
@@ -47,53 +50,6 @@ func main() {
 	userService := user.NewService(userRepository)
 	authService := auth.NewService()
 
-	// token, err := authService.ValidateToken("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxM30.ChRN8jZvAiPwBuv19VzZ2dqVWM0xzUWlj6eagXbQOpo")
-	// if err != nil {
-	// 	fmt.Println("ERROR")
-	// 	fmt.Println("ERROR")
-	// 	fmt.Println("ERROR")
-	// }
-
-	// if token.Valid {
-	// 	fmt.Println("VALID")
-	// 	fmt.Println("VALID")
-	// 	fmt.Println("VALID")
-	// } else {
-	// 	fmt.Println("INVALID")
-	// 	fmt.Println("INVALID")
-	// 	fmt.Println("INVALID")
-	// }
-
-	// fmt.Println(authService.GenerateToken(1000))
-
-	// userService.SaveAvatar(1, "images/1-profile.png")
-
-	// test service
-	// input := user.LoginInput{
-	// 	Email:    "opick@email.com",
-	// 	Password: "password",
-	// }
-	// user, err := userService.Login(input)
-	// if err != nil {
-	// 	fmt.Println("Terjadi kesalahan")
-	// 	fmt.Println(err.Error())
-	// }
-
-	// fmt.Println(user.Email)
-	// fmt.Println(user.Name)
-
-	// test repository
-	// userByEmail, err := userRepository.FindByEmail("opick@email.com")
-	// if err != nil {
-	// 	fmt.Println(err.Error())
-	// }
-	// // fmt.Println(userByEmail.Name)
-	// if userByEmail.ID == 0 {
-	// 	fmt.Println("User tidak ditemukan")
-	// } else {
-	// 	fmt.Println(userByEmail.Name)
-	// }
-
 	userHandler := handler.NewUserHandler(userService, authService)
 
 	router := gin.Default()
@@ -102,7 +58,86 @@ func main() {
 	api.POST("/users", userHandler.RegisterUser)
 	api.POST("/sessions", userHandler.Login)
 	api.POST("/email_checkers", userHandler.CheckEmailAvailability)
-	api.POST("/avatars", userHandler.UploadAvatar)
+	// api.POST("/avatars", authMiddleware, userHandler.UploadAvatar) // passing function authMiddleware
+	api.POST("/avatars", authMiddleware(authService, userService), userHandler.UploadAvatar) // passing nilai kembalian dari function authMiddleware
 
 	router.Run()
 }
+
+func authMiddleware(authService auth.Service, userService user.Service) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		authHeader := c.GetHeader("Authorization")
+
+		// validation
+		if !strings.Contains(authHeader, "Bearer") {
+			response := helper.APIResponse("Unauthorized", http.StatusUnauthorized, "error", nil)
+			c.AbortWithStatusJSON(http.StatusUnauthorized, response) // middleware ada di tengah, jika ada error/ terkena validasi, proses seharusnya dihentikan
+			return
+		}
+
+		// Bearer token
+		tokenString := ""
+		arrayToken := strings.Split(authHeader, " ")
+		if len(arrayToken) == 2 {
+			tokenString = arrayToken[1]
+		}
+
+		token, err := authService.ValidateToken(tokenString)
+		if err != nil {
+			response := helper.APIResponse("Unauthorized", http.StatusUnauthorized, "error", nil)
+			c.AbortWithStatusJSON(http.StatusUnauthorized, response) // middleware ada di tengah, jika ada error/ terkena validasi, proses seharusnya dihentikan
+			return
+		}
+
+		claim, ok := token.Claims.(jwt.MapClaims)
+
+		if !ok || !token.Valid {
+			response := helper.APIResponse("Unauthorized", http.StatusUnauthorized, "error", nil)
+			c.AbortWithStatusJSON(http.StatusUnauthorized, response) // middleware ada di tengah, jika ada error/ terkena validasi, proses seharusnya dihentikan
+			return
+		}
+
+		// ambil id user
+		userID := int(claim["user_id"].(float64))
+
+		user, err := userService.GetUserByID(userID)
+		if err != nil {
+			response := helper.APIResponse("Unauthorized", http.StatusUnauthorized, "error", nil)
+			c.AbortWithStatusJSON(http.StatusUnauthorized, response) // middleware ada di tengah, jika ada error/ terkena validasi, proses seharusnya dihentikan
+			return
+		}
+
+		c.Set("currentUser", user)
+	}
+}
+
+// // gin handler hanya ada 1 parameter gin.Context
+// func authMiddleware(c *gin.Context) {
+// 	/*
+// 		KONSEP MIDDLEWARE
+// 		- ambil nilai header Authorization -> bearer token
+// 		- dari header Authorization, kita ambil nilai tokennya saja
+// 		- kita validasi token
+// 		- kita ambil user_id
+// 		- ambil user dari db berdasarkan user_id lewat service
+// 		- kita set context isinya user
+// 	*/
+// 	authHeader := c.GetHeader("Authorization")
+
+// 	// validation
+// 	if !strings.Contains(authHeader, "Bearer") {
+// 		response := helper.APIResponse("Unauthorized", http.StatusUnauthorized, "error", nil)
+// 		c.AbortWithStatusJSON(http.StatusUnauthorized, response) // middleware ada di tengah, jika ada error/ terkena validasi, proses seharusnya dihentikan
+// 		return
+// 	}
+
+// 	// Bearer token
+// 	tokenString := ""
+// 	arrayToken := strings.Split(authHeader, " ")
+// 	if len(arrayToken) == 2 {
+// 		tokenString = arrayToken[1]
+// 	}
+
+// 	token, err :=
+
+// }
