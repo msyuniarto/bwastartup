@@ -51,24 +51,13 @@ func main() {
 	campaignRepository := campaign.NewRepository(db)
 	/* end call repository */
 
-	/* DEBUGGING REPOSITORY */
-	// campaigns, _ := campaignRepository.FindAll()
-	campaigns, _ := campaignRepository.FindByUserID(1)
-	fmt.Println("debug")
-	fmt.Println("debug")
-	fmt.Println("debug")
-	fmt.Println(len(campaigns))
-	for _, campaign := range campaigns {
-		fmt.Println(campaign.Name)
-		if len(campaign.CampaignImages) > 0 {
-			fmt.Println(campaign.CampaignImages[0].FileName)
-		}
-	}
-	/* DEBUGGING REPOSITORY */
-
 	/* call service */
 	userService := user.NewService(userRepository)
 	authService := auth.NewService()
+
+	campaignService := campaign.NewService(campaignRepository)
+	campaigns, _ := campaignService.FindCampaign(8)
+	fmt.Println(len(campaigns))
 	/* end call service */
 
 	/* call handler */
