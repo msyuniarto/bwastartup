@@ -46,24 +46,24 @@ func main() {
 
 	fmt.Println("Connection to database is good")
 
-	/* call repository */
+	/* CALL REPOSITORY */
 	userRepository := user.NewRepository(db) // call func NewRepository dari /user/repository
 	campaignRepository := campaign.NewRepository(db)
-	/* end call repository */
+	/* END CALL REPOSITORY */
 
-	/* call service */
+	/* CALL SERVICE */
 	userService := user.NewService(userRepository)
 	authService := auth.NewService()
 
 	campaignService := campaign.NewService(campaignRepository)
-	campaigns, _ := campaignService.FindCampaign(8)
-	fmt.Println(len(campaigns))
-	/* end call service */
+	/* END CALL SERVICE */
 
-	/* call handler */
+	/* CALL HANDLER */
 	userHandler := handler.NewUserHandler(userService, authService)
-	/* end call handler */
+	campaignHandler := handler.NewCampaignHandler(campaignService)
+	/* END CALL HANDLER */
 
+	/* ROUTING */
 	router := gin.Default()
 	api := router.Group("/api/v1")
 
@@ -73,7 +73,10 @@ func main() {
 	// api.POST("/avatars", authMiddleware, userHandler.UploadAvatar) // passing function authMiddleware
 	api.POST("/avatars", authMiddleware(authService, userService), userHandler.UploadAvatar) // passing nilai kembalian dari function authMiddleware
 
+	api.GET("/campaigns", campaignHandler.GetCampaigns)
+
 	router.Run()
+	/* END ROUTING */
 }
 
 func authMiddleware(authService auth.Service, userService user.Service) gin.HandlerFunc {
