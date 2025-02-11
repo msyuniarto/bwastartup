@@ -74,35 +74,35 @@ type CampaignImageFormatter struct {
 	IsPrimary bool   `json:"is_primary"`
 }
 
-func FormatCampaigDetail(campaign Campaign) CampaignDetailFormatter {
-	CampaignDetailFormatter := CampaignDetailFormatter{}
+func FormatCampaignDetail(campaign Campaign) CampaignDetailFormatter {
+	campaignDetailFormatter := CampaignDetailFormatter{}
 
-	CampaignDetailFormatter.ID = campaign.ID
-	CampaignDetailFormatter.Name = campaign.Name
-	CampaignDetailFormatter.ShortDescription = campaign.ShortDescription
-	CampaignDetailFormatter.Description = campaign.Description
-	CampaignDetailFormatter.GoalAmount = campaign.GoalAmount
-	CampaignDetailFormatter.CurrentAmount = campaign.CurrentAmount
-	CampaignDetailFormatter.UserID = campaign.UserID
-	CampaignDetailFormatter.Slug = campaign.Slug
-	CampaignDetailFormatter.ImageURL = ""
+	campaignDetailFormatter.ID = campaign.ID
+	campaignDetailFormatter.Name = campaign.Name
+	campaignDetailFormatter.ShortDescription = campaign.ShortDescription
+	campaignDetailFormatter.Description = campaign.Description
+	campaignDetailFormatter.GoalAmount = campaign.GoalAmount
+	campaignDetailFormatter.CurrentAmount = campaign.CurrentAmount
+	campaignDetailFormatter.UserID = campaign.UserID
+	campaignDetailFormatter.Slug = campaign.Slug
+	campaignDetailFormatter.ImageURL = ""
 
 	if len(campaign.CampaignImages) > 0 {
-		CampaignDetailFormatter.ImageURL = campaign.CampaignImages[0].FileName
+		campaignDetailFormatter.ImageURL = campaign.CampaignImages[0].FileName
 	}
 
 	var perks []string
 	for _, perk := range strings.Split(campaign.Perks, ",") {
 		perks = append(perks, strings.TrimSpace(perk))
 	}
-	CampaignDetailFormatter.Perks = perks
+	campaignDetailFormatter.Perks = perks
 
 	user := campaign.User
 	campaignUserFormatter := CampaignUserFormatter{}
 	campaignUserFormatter.Name = user.Name
 	campaignUserFormatter.ImageURL = user.AvatarFileName
 
-	CampaignDetailFormatter.User = campaignUserFormatter
+	campaignDetailFormatter.User = campaignUserFormatter
 
 	images := []CampaignImageFormatter{}
 	for _, image := range campaign.CampaignImages {
@@ -118,6 +118,6 @@ func FormatCampaigDetail(campaign Campaign) CampaignDetailFormatter {
 		images = append(images, campaignImageFormatter)
 	}
 
-	CampaignDetailFormatter.Images = images
-	return CampaignDetailFormatter
+	campaignDetailFormatter.Images = images
+	return campaignDetailFormatter
 }
