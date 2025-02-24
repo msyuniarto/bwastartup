@@ -27,7 +27,7 @@ func (h *transactionHandler) GetCampaignTransactions(c *gin.Context) {
 
 	err := c.ShouldBindUri(&input)
 	if err != nil {
-		response := helper.APIResponse("Failed to get campaign's transaction", http.StatusBadRequest, "error", nil)
+		response := helper.APIResponse("Failed to get campaign's transactions", http.StatusBadRequest, "error", nil)
 		c.JSON(http.StatusBadRequest, response)
 		return
 	}
@@ -38,11 +38,32 @@ func (h *transactionHandler) GetCampaignTransactions(c *gin.Context) {
 
 	transactions, err := h.service.GetTransactionsByCampaignID(input)
 	if err != nil {
-		response := helper.APIResponse("Failed to get campaign's transaction", http.StatusBadRequest, "error", nil)
+		response := helper.APIResponse("Failed to get campaign's transactions", http.StatusBadRequest, "error", nil)
 		c.JSON(http.StatusBadRequest, response)
 		return
 	}
 
-	response := helper.APIResponse("Campaign's transaction", http.StatusOK, "success", transaction.FormatCampaignTransactions(transactions))
+	response := helper.APIResponse("Campaign's transactions", http.StatusOK, "success", transaction.FormatCampaignTransactions(transactions))
+	c.JSON(http.StatusOK, response)
+}
+
+// get user transactions
+// handler
+// ambil nilai user dari jwt/middleware
+// service
+// repo -> ambil data transactions (preload campaign)
+func (h *transactionHandler) GetUserTransactions(c *gin.Context) {
+	currentUser := c.MustGet("currentUser").(user.User)
+	userID := currentUser.ID
+
+	transactions, err := h.service.GetTransactionsByUserID(userID)
+	if err != nil {
+		response := helper.APIResponse("Failed to get user's transactions", http.StatusBadRequest, "error", nil)
+		c.JSON(http.StatusBadRequest, response)
+		return
+	}
+
+	// response := helper.APIResponse("User's transactions", http.StatusOK, "success", transactions)
+	response := helper.APIResponse("User's transactions", http.StatusOK, "success", transaction.FormatUserTransactions(transactions))
 	c.JSON(http.StatusOK, response)
 }
