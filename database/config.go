@@ -37,3 +37,16 @@ func SetupDatabase() *gorm.DB {
 	fmt.Println("Connection to database is good from config file")
 	return db
 }
+
+// sqlite version
+// func SetupDatabase() *gorm.DB {
+// 	// Buat koneksi ke SQLite (akan membuat file jika belum ada)
+// 	db, err := gorm.Open(sqlite.Open("data.db"), &gorm.Config{})
+// 	if err != nil {
+// 		log.Fatal("Failed to connect to SQLite database:", err)
+// 		return nil
+// 	}
+
+// 	fmt.Println("Connection to SQLite database is good")
+// 	return db
+// }

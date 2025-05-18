@@ -15,6 +15,7 @@ import (
 	"strings"
 
 	"github.com/dgrijalva/jwt-go"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
@@ -103,6 +104,7 @@ func main() {
 
 	/* ROUTING */
 	router := gin.Default()
+	router.Use(cors.Default())
 	api := router.Group("/api/v1")
 
 	// routing gambar
