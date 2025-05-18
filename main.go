@@ -3,49 +3,60 @@ package main
 import (
 	"bwastartup/auth"
 	"bwastartup/campaign"
+	"bwastartup/database"
 	"bwastartup/handler"
 	"bwastartup/helper"
+	"bwastartup/payment"
 	"bwastartup/transaction"
 	"bwastartup/user"
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 	"strings"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
-	"github.com/joho/godotenv"
-	"gorm.io/driver/mysql"
-	"gorm.io/gorm"
 )
 
 func main() {
 	// Load file .env
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
+	// err := godotenv.Load()
+	// if err != nil {
+	// 	log.Fatal("Error loading .env file")
+	// 	return
+	// }
+
+	// // Ambil nilai dari .env
+	// ipAddress := os.Getenv("DB_HOST")
+	// dbPort := os.Getenv("DB_PORT")
+	// dbUser := os.Getenv("DB_USER")
+	// dbPass := os.Getenv("DB_PASS")
+	// dbName := os.Getenv("DB_NAME")
+
+	// dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local", dbUser, dbPass, ipAddress, dbPort, dbName)
+	// // fmt.Println(dsn)
+
+	// db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+
+	// if err != nil {
+	// 	log.Fatal(err.Error())
+	// 	return
+	// }
+
+	// fmt.Println("Connection to database is good")
+
+	// setup database
+	db := database.SetupDatabase()
+	if db == nil {
+		log.Fatal("Failed to initialize database")
 		return
 	}
 
-	// Ambil nilai dari .env
-	ipAddress := os.Getenv("DB_HOST")
-	dbPort := os.Getenv("DB_PORT")
-	dbUser := os.Getenv("DB_USER")
-	dbPass := os.Getenv("DB_PASS")
-	dbName := os.Getenv("DB_NAME")
+	// Sekarang Anda dapat menggunakan variabel 'db' untuk interaksi database Anda
+	fmt.Println("Database connection established in main.go")
 
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local", dbUser, dbPass, ipAddress, dbPort, dbName)
-	// fmt.Println(dsn)
-
-	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
-
-	if err != nil {
-		log.Fatal(err.Error())
-		return
-	}
-
-	fmt.Println("Connection to database is good")
+	// Panggil fungsi AutoMigrate dari package database
+	database.AutoMigrate(db)
 
 	/* CALL REPOSITORY */
 	userRepository := user.NewRepository(db) // call func NewRepository dari /user/repository
@@ -58,7 +69,17 @@ func main() {
 	authService := auth.NewService()
 
 	campaignService := campaign.NewService(campaignRepository)
-	transactionService := transaction.NewService(transactionRepository, campaignRepository)
+	paymentService := payment.NewService()
+	transactionService := transaction.NewService(transactionRepository, campaignRepository, paymentService)
+
+	// test service
+	// user, _ := userService.GetUserByID(1)
+	// input := transaction.CreateTransactionInput{
+	// 	CampaignID: 1,
+	// 	Amount:     5000000,
+	// 	User:       user,
+	// }
+	// transactionService.CreateTransaction(input)
 
 	// input := campaign.CreateCampaignInput{}
 	// input.Name = "Penggalangan Dana Startup"
@@ -101,6 +122,7 @@ func main() {
 
 	api.GET("/campaigns/:id/transactions", authMiddleware(authService, userService), transactionHandler.GetCampaignTransactions)
 	api.GET("/transactions", authMiddleware(authService, userService), transactionHandler.GetUserTransactions)
+	api.POST("/transactions", authMiddleware(authService, userService), transactionHandler.CreateTransaction)
 
 	router.Run()
 	/* END ROUTING */
