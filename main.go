@@ -12,10 +12,14 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"path/filepath"
 	"strings"
+
+	webHandler "bwastartup/web/handler" // diberi alias agar tidak bentrok nama yang sama
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-contrib/cors"
+	"github.com/gin-contrib/multitemplate"
 	"github.com/gin-gonic/gin"
 )
 
@@ -102,9 +106,16 @@ func main() {
 	transactionHandler := handler.NewTransactionHandler(transactionService)
 	/* END CALL HANDLER */
 
+	/* WEB HANDLER */
+	userWebHandler := webHandler.NewUserHandler()
+	/* END WEB HANDLER */
+
 	/* ROUTING */
 	router := gin.Default()
 	router.Use(cors.Default())
+
+	router.HTMLRender = loadTemplates("./web/templates")
+
 	api := router.Group("/api/v1")
 
 	// routing gambar
@@ -128,6 +139,9 @@ func main() {
 	api.POST("/transactions", authMiddleware(authService, userService), transactionHandler.CreateTransaction)
 	api.POST("/transactions/notification", transactionHandler.GetNotification)
 
+	router.GET("/users", userWebHandler.Index)
+
+	// router.Run(":8081")
 	router.Run()
 	/* END ROUTING */
 }
@@ -177,4 +191,27 @@ func authMiddleware(authService auth.Service, userService user.Service) gin.Hand
 
 		c.Set("currentUser", user)
 	}
+}
+
+func loadTemplates(templatesDir string) multitemplate.Renderer {
+	r := multitemplate.NewRenderer()
+
+	layouts, err := filepath.Glob(templatesDir + "/layouts/*.html")
+	if err != nil {
+		panic(err.Error())
+	}
+
+	includes, err := filepath.Glob(templatesDir + "/**/*") // load semua folder didalam folder templates
+	if err != nil {
+		panic(err.Error())
+	}
+
+	// Generate our templates map from our layouts/ and includes/ directories
+	for _, include := range includes {
+		layoutCopy := make([]string, len(layouts))
+		copy(layoutCopy, layouts)
+		files := append(layoutCopy, include)
+		r.AddFromFiles(filepath.Base(include), files...)
+	}
+	return r
 }
