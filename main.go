@@ -107,7 +107,7 @@ func main() {
 	/* END CALL HANDLER */
 
 	/* WEB HANDLER */
-	userWebHandler := webHandler.NewUserHandler()
+	userWebHandler := webHandler.NewUserHandler(userService)
 	/* END WEB HANDLER */
 
 	/* ROUTING */
@@ -118,6 +118,9 @@ func main() {
 
 	api := router.Group("/api/v1")
 
+	router.Static("/css", "./web/assets/css")
+	router.Static("/js", "./web/assets/js")
+	router.Static("/webfonts", "./web/assets/webfonts")
 	// routing gambar
 	router.Static("/images", "./images") // ./images -> nama folder | /images -> pada saat akses endpoint
 
@@ -140,6 +143,8 @@ func main() {
 	api.POST("/transactions/notification", transactionHandler.GetNotification)
 
 	router.GET("/users", userWebHandler.Index)
+	router.GET("/users/new", userWebHandler.New)
+	router.POST("/users", userWebHandler.Create)
 
 	// router.Run(":8081")
 	router.Run()

@@ -8,6 +8,7 @@ type Repository interface {
 	FindByEmail(email string) (User, error) // parameter email dan balikannya User
 	FindByID(ID int) (User, error)          // parameter ID dan balikannya User
 	Update(user User) (User, error)         // parameter user dan balikannya User
+	FindAll() ([]User, error)
 }
 
 // penamaan huruf kecil di depan menandakan package lain tidak dapat mengakses langsung (private)
@@ -55,4 +56,15 @@ func (r *repository) Update(user User) (User, error) {
 		return user, err
 	}
 	return user, nil
+}
+
+func (r *repository) FindAll() ([]User, error) {
+	var users []User
+
+	err := r.db.Find(&users).Error
+	if err != nil {
+		return users, err
+	}
+
+	return users, nil
 }
