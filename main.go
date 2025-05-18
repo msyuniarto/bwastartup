@@ -115,6 +115,7 @@ func main() {
 	api.POST("/email_checkers", userHandler.CheckEmailAvailability)
 	// api.POST("/avatars", authMiddleware, userHandler.UploadAvatar) // passing function authMiddleware
 	api.POST("/avatars", authMiddleware(authService, userService), userHandler.UploadAvatar) // passing nilai kembalian dari function authMiddleware
+	api.GET("/users/fetch", authMiddleware(authService, userService), userHandler.FetchUser)
 
 	api.GET("/campaigns", campaignHandler.GetCampaigns)
 	api.GET("/campaigns/:id", campaignHandler.GetCampaign)
