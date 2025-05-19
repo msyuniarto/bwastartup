@@ -3,3 +3,5 @@
 test.txt
 *.bak
 /images
+.replit
+*.db
