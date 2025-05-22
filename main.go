@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -120,7 +121,7 @@ func main() {
 	router.Use(cors.Default()) // handle cors
 
 	/* cookie / session */
-	cookieStore := cookie.NewStore([]byte(auth.SECRET_KEY))
+	cookieStore := cookie.NewStore([]byte(os.Getenv("SESSION_SECRET")))
 	router.Use(sessions.Sessions("bwastartup", cookieStore))
 	/* end cookie / session */
 
