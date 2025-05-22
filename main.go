@@ -112,6 +112,7 @@ func main() {
 	userWebHandler := webHandler.NewUserHandler(userService)
 	campaignWebHandler := webHandler.NewCampaignHandler(campaignService, userService)
 	transactionWebHandler := webHandler.NewTransactionHandler(transactionService)
+	sessionWebHandler := webHandler.NewSessionHandler(userService)
 	/* END WEB HANDLER */
 
 	/* ROUTING */
@@ -169,6 +170,11 @@ func main() {
 	router.GET("/campaigns/show/:id", authAdminMiddleware(), campaignWebHandler.Show)
 
 	router.GET("/transactions", authAdminMiddleware(), transactionWebHandler.Index)
+
+	router.GET("/login", sessionWebHandler.New)
+	router.POST("/session", sessionWebHandler.Create)
+
+	router.GET("/logout", sessionWebHandler.Destroy)
 
 	// router.Run(":8081")
 	router.Run()
